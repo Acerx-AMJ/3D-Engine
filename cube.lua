@@ -23,3 +23,21 @@ CubeTriangles = {
    {3, 2, 6, 0, 255, 255},
    {6, 7, 3, 0, 255, 255},
 }
+
+function NewCube()
+   return {
+      x = 0,
+      y = 0,
+      z = 0,
+      w = 0,
+      h = 0,
+      d = 0,
+      ox = 0,
+      oy = 0,
+      oz = 0,
+      rx = 0,
+      ry = 0,
+      rz = 0,
+      points = {}
+   }
+end
