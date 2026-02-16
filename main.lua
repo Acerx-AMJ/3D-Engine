@@ -1,3 +1,4 @@
+require("colors")
 require("geometry")
 
 local rotation = {0, 0, 0}
@@ -9,8 +10,9 @@ function love.load()
    love.window.setTitle("3D Engine")
    love.window.setMode(800, 800)
 
-   table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0, {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {0, 255, 255}, {255, 0, 255}, {255, 255, 0}}))
-   table.insert(geometry, NewCube(4.0, 0.0, 3.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {0, 255, 255}, {255, 0, 255}, {255, 255, 0}}))
+   table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   table.insert(geometry, NewCube(4.0, 0.0, 3.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   table.insert(geometry, NewWedge(-2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
 end
 
 function love.draw()
@@ -69,7 +71,7 @@ function love.draw()
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t[1]], points[t[2]], points[t[3]]
          local depth = math.min(p1[3] + p2[3] + p3[3])
-         local color = shape.colors[math.floor((i + 1) / 2)]
+         local color = shape.colors[i]
 
          table.insert(triangles, {p1, p2, p3, color[1], color[2], color[3], depth, z / #points})
       end
@@ -97,12 +99,5 @@ function love.draw()
          end
       end
       love.graphics.setColor(255, 255, 255, 1)
-   end
-
-   for i = 1, #geometry do
-      local s = geometry[i]
-      local r = Rotate3D(s.ox + offset[1], s.oy + offset[2], s.oz + offset[3], rotation[1], rotation[2], rotation[3])
-      local t = TranslateToScreen(r[1], r[2], r[3])
-      love.graphics.circle("fill", t[1], t[2], 20 / s.z)
    end
 end
