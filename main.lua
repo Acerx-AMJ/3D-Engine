@@ -1,19 +1,16 @@
-require("cube")
-require("math3d")
+require("geometry")
 
 local rotation = {0, 0, 0}
 local offset = {0, 0, 0}
 local lastmousepos = {0, 0}
-local cubes = {}
+local geometry = {}
 
 function love.load()
    love.window.setTitle("3D Engine")
    love.window.setMode(800, 800)
 
-   table.insert(cubes, NewCube())
-   table.insert(cubes, NewCube())
-   table.insert(cubes, NewCube())
-   table.insert(cubes, NewCube())
+   table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0, {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {0, 255, 255}, {255, 0, 255}, {255, 255, 0}}))
+   table.insert(geometry, NewCube(4.0, 0.0, 3.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {0, 255, 255}, {255, 0, 255}, {255, 255, 0}}))
 end
 
 function love.draw()
@@ -57,27 +54,31 @@ function love.draw()
 
    -- Sort cubes
    local triangles = {}
-   for j = 1, #cubes do
-      local cube = cubes[j]
-      local cubeOriginZ = 0
+   for j = 1, #geometry do
+      local shape = geometry[j]
+      local points = {}
+      local z = 0
 
-      for i = 1, #CubeVertices do
-         local p = CubeVertices[i]
-         cube.points[i] = Rotate3D(p[1] + offset[1] + (j - 1) * 2, p[2] + offset[2], p[3] + offset[3], rotation[1], rotation[2], rotation[3])
-         cubeOriginZ = cubeOriginZ + p[3]
+      for i = 1, #shape.points do
+         local p = shape.points[i]
+         points[i] = Rotate3D(p[1] + offset[1], p[2] + offset[2], p[3] + offset[3], rotation[1], rotation[2], rotation[3])
+         z = z + points[i][3]
       end
 
-      for i = 1, # CubeTriangles do
-         local t = CubeTriangles[i]
-         local p1, p2, p3 = cube.points[t[1] + 1], cube.points[t[2] + 1], cube.points[t[3] + 1]
+      for i = 1, #shape.triangles do
+         local t = shape.triangles[i]
+         local p1, p2, p3 = points[t[1]], points[t[2]], points[t[3]]
          local depth = math.min(p1[3] + p2[3] + p3[3])
+         local color = shape.colors[math.floor((i + 1) / 2)]
 
-         table.insert(triangles, {p1, p2, p3, t[4], t[5], t[6], depth, cubeOriginZ})
+         table.insert(triangles, {p1, p2, p3, color[1], color[2], color[3], depth, z / #points})
       end
    end
 
    table.sort(triangles, function(a, b)
-      if (a[8] > b[8]) then return true end
+      if (a[8] ~= b[8]) then
+         return a[8] > b[8]
+      end
       return a[7] > b[7]
    end)
 
@@ -96,5 +97,12 @@ function love.draw()
          end
       end
       love.graphics.setColor(255, 255, 255, 1)
+   end
+
+   for i = 1, #geometry do
+      local s = geometry[i]
+      local r = Rotate3D(s.ox + offset[1], s.oy + offset[2], s.oz + offset[3], rotation[1], rotation[2], rotation[3])
+      local t = TranslateToScreen(r[1], r[2], r[3])
+      love.graphics.circle("fill", t[1], t[2], 20 / s.z)
    end
 end
