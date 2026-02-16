@@ -9,6 +9,19 @@ CubeVertices = {
    {-0.5, -0.5,  2.0},
 }
 
+--[[
+local vertices = {
+   {x, y, z + d},
+   {x + w, y, z + d},
+   {x + w, y + h, z + d},
+   {x, y + h, z + d},
+   {x, y, z},
+   {x + w, y, z},
+   {x + w, y + h, z},
+   {x, y + h, z},
+}
+]]
+
 CubeTriangles = {
    {7, 6, 5, 255, 0, 0},
    {5, 4, 7, 255, 0, 0},
