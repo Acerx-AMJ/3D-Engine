@@ -5,14 +5,15 @@ local rotation = {0, 0, 0}
 local offset = {0, 0, 0}
 local lastmousepos = {0, 0}
 local geometry = {}
+local timer = 0
 
 function love.load()
    love.window.setTitle("3D Engine")
    love.window.setMode(800, 800)
 
    table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   table.insert(geometry, NewCube(4.0, 0.0, 3.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   table.insert(geometry, NewWedge(-2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
+   table.insert(geometry, NewCube(2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   table.insert(geometry, NewWedge(-2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
 end
 
 function love.draw()
@@ -54,7 +55,17 @@ function love.draw()
       offset[3] = offset[3] + rotatedoffset[3]
    end
 
-   -- Sort cubes
+   -- Update geometry
+   timer = timer + love.timer.getDelta()
+   MoveGeometry(geometry[1], geometry[1].x, math.sin(timer), geometry[1].z)
+
+   ScaleGeometry(geometry[2], 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5)
+   RotateGeometry(geometry[2], 0, timer * 2, 0)
+
+   ScaleGeometry(geometry[3], 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5)
+   RotateGeometry(geometry[3], timer, 0, 0)
+
+   -- Sort triangles
    local triangles = {}
    for j = 1, #geometry do
       local shape = geometry[j]
@@ -84,7 +95,7 @@ function love.draw()
       return a[7] > b[7]
    end)
 
-   -- Draw cubes
+   -- Draw triangles
    for j = 1, #triangles do
       local t = triangles[j]
 

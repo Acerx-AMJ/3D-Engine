@@ -1,24 +1,87 @@
 require("math3d")
 
-local function setupShapesOriginAndRotation(vertices, ox, oy, oz, rx, ry, rz)
+-- Geometry creation functions
+
+local function setupShapesOrigin(vertices)
+   local origin = {
+      ox = 0,
+      oy = 0,
+      oz = 0,
+   }
+
    for i = 1, #vertices do
       local v = vertices[i]
-      ox = ox + v[1]
-      oy = oy + v[2]
-      oz = oz + v[3]
+      origin.ox = origin.ox + v[1]
+      origin.oy = origin.oy + v[2]
+      origin.oz = origin.oz + v[3]
    end
-   ox = ox / #vertices
-   oy = oy / #vertices
-   oz = oz / #vertices
 
-   if rx ~= 0 or ry ~= 0 or rz ~= 0 then
-      for i = 1, #vertices do
-         local v = vertices[i]
-         v = Rotate3D(v[1] - ox, v[2] - oy, v[3] - oz, rx, ry, rz)
-         vertices[i] = {v[1] + ox, v[2] + oy, v[3] + oz}
+   return {
+      ox = origin.ox / #vertices,
+      oy = origin.oy / #vertices,
+      oz = origin.oz / #vertices,
+   }
+end
+
+local function setupShapesVerticesBasedOnRotation(vertices, points, ox, oy, oz, rx, ry, rz)
+   for i = 1, #vertices do
+      local v = vertices[i]
+      if rx == 0 and ry == 0 and rz == 0 then
+         points[i] = v
+      else
+         points[i] = Rotate3D(v[1] - ox, v[2] - oy, v[3] - oz, rx, ry, rz)
+         points[i] = {points[i][1] + ox, points[i][2] + oy, points[i][3] + oz}
       end
    end
 end
+
+-- Geometry edit functions
+
+function MoveGeometry(geometry, nx, ny, nz)
+   for i = 1, #geometry.vertices do
+      geometry.vertices[i][1] = geometry.vertices[i][1] - geometry.x + nx
+      geometry.vertices[i][2] = geometry.vertices[i][2] - geometry.y + ny
+      geometry.vertices[i][3] = geometry.vertices[i][3] - geometry.z + nz
+   end
+
+   geometry.x = nx
+   geometry.y = ny
+   geometry.z = nz
+
+   local origin = setupShapesOrigin(geometry.vertices)
+   geometry.ox = origin.ox
+   geometry.oy = origin.oy
+   geometry.oz = origin.oz
+
+   setupShapesVerticesBasedOnRotation(geometry.vertices, geometry.points, geometry.ox, geometry.oy, geometry.oz, geometry.rx, geometry.ry, geometry.rz)
+end
+
+function ScaleGeometry(geometry, nw, nh, nd)
+   local sx, sy, sz = nw / geometry.w, nh / geometry.h, nd / geometry.d
+
+   for i = 1, #geometry.vertices do
+      geometry.vertices[i][1] = geometry.x + (geometry.vertices[i][1] - geometry.x) * sx
+      geometry.vertices[i][2] = geometry.y + (geometry.vertices[i][2] - geometry.y) * sy
+      geometry.vertices[i][3] = geometry.z + (geometry.vertices[i][3] - geometry.z) * sz
+   end
+
+   geometry.w = nw
+   geometry.h = nh
+   geometry.d = nd
+
+   local origin = setupShapesOrigin(geometry.vertices)
+   geometry.ox = origin.ox
+   geometry.oy = origin.oy
+   geometry.oz = origin.oz
+
+   setupShapesVerticesBasedOnRotation(geometry.vertices, geometry.points, geometry.ox, geometry.oy, geometry.oz, geometry.rx, geometry.ry, geometry.rz)
+end
+
+function RotateGeometry(geometry, nrx, nry, nrz)
+   setupShapesVerticesBasedOnRotation(geometry.vertices, geometry.points, geometry.ox, geometry.oy, geometry.oz, nrx, nry, nrz)
+end
+
+-- New geometry
 
 local cubeTriangles = {
    {8, 7, 6},
@@ -36,11 +99,6 @@ local cubeTriangles = {
 }
 
 function NewCube(x, y, z, w, h, d, rx, ry, rz, colors)
-   -- make sure the cube is centered
-   x = x - w / 2
-   y = y - h / 2
-   z = z - d / 2
-
    local vertices = {
       {x, y + h, z + d},
       {x + w, y + h, z + d},
@@ -53,8 +111,9 @@ function NewCube(x, y, z, w, h, d, rx, ry, rz, colors)
       {x, y, z},
    }
 
-   local ox, oy, oz = 0, 0, 0
-   setupShapesOriginAndRotation(vertices, ox, oy, oz, rx, ry, rz)
+   local origin = setupShapesOrigin(vertices)
+   local points = {}
+   setupShapesVerticesBasedOnRotation(vertices, points, origin.ox, origin.oy, origin.oz, rx, ry, rz)
 
    return {
       x = x,
@@ -63,14 +122,15 @@ function NewCube(x, y, z, w, h, d, rx, ry, rz, colors)
       w = w,
       h = h,
       d = d,
-      ox = ox,
-      oy = oy,
-      oz = oz,
+      ox = origin.ox,
+      oy = origin.oy,
+      oz = origin.oz,
       rx = rx,
       ry = ry,
       rz = rz,
       triangles = cubeTriangles,
-      points = vertices,
+      vertices = vertices,
+      points = points,
       colors = colors,
    }
 end
@@ -87,11 +147,6 @@ local wedgeTriangles = {
 }
 
 function NewWedge(x, y, z, w, h, d, rx, ry, rz, colors)
-   -- make sure the wedge is centered
-   x = x - w / 2
-   y = y - h / 2
-   z = z - d / 2
-
    local vertices = {
       {x, y + h, z + d},
       {x + w, y + h, z + d},
@@ -101,8 +156,9 @@ function NewWedge(x, y, z, w, h, d, rx, ry, rz, colors)
       {x, y, z},
    }
 
-   local ox, oy, oz = 0, 0, 0
-   setupShapesOriginAndRotation(vertices, ox, oy, oz, rx, ry, rz)
+   local origin = setupShapesOrigin(vertices)
+   local points = {}
+   setupShapesVerticesBasedOnRotation(vertices, points, origin.ox, origin.oy, origin.oz, rx, ry, rz)
 
    return {
       x = x,
@@ -111,14 +167,15 @@ function NewWedge(x, y, z, w, h, d, rx, ry, rz, colors)
       w = w,
       h = h,
       d = d,
-      ox = ox,
-      oy = oy,
-      oz = oz,
+      ox = origin.ox,
+      oy = origin.oy,
+      oz = origin.oz,
       rx = rx,
       ry = ry,
       rz = rz,
       triangles = wedgeTriangles,
-      points = vertices,
+      vertices = vertices,
+      points = points,
       colors = colors,
    }
 end
