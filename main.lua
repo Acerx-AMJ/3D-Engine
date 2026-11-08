@@ -1,3 +1,8 @@
+WIDTH = 200
+HEIGHT = 200
+CANVAS = nil
+IMAGE = nil
+
 require("colors")
 require("geometry")
 
@@ -10,10 +15,16 @@ local timer = 0
 function love.load()
    love.window.setTitle("3D Engine")
    love.window.setMode(800, 800)
+   CANVAS = love.image.newImageData(WIDTH, HEIGHT)
+   IMAGE = love.graphics.newImage(CANVAS)
+   IMAGE:setFilter("nearest", "nearest")
 
    table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
    table.insert(geometry, NewCube(2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
    table.insert(geometry, NewWedge(-2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
+
+   table.insert(geometry, NewCube(2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   table.insert(geometry, NewWedge(3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
 end
 
 function love.draw()
@@ -81,7 +92,7 @@ function love.draw()
       for i = 1, #shape.triangles do
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t[1]], points[t[2]], points[t[3]]
-         local depth = math.min(p1[3] + p2[3] + p3[3])
+         local depth = math.min(p1[3], p2[3], p3[3])
          local color = shape.colors[i]
 
          table.insert(triangles, {p1, p2, p3, color[1], color[2], color[3], depth, z / #points})
@@ -96,6 +107,9 @@ function love.draw()
    end)
 
    -- Draw triangles
+   local function pfunc(x, y, r, g, b, a) return 0, 0, 0, 1 end
+   CANVAS:mapPixel(pfunc, 0, 0, WIDTH, HEIGHT)
+
    for j = 1, #triangles do
       local t = triangles[j]
 
@@ -105,10 +119,11 @@ function love.draw()
          local s3 = TranslateToScreen(t[3][1], t[3][2], t[3][3])
 
          if TriangleNormalZ(s1[1], s1[2], s2[1], s2[2], s3[1], s3[2]) <= 0 then
-            love.graphics.setColor(t[4], t[5], t[6], 1)
-            love.graphics.polygon("fill", s1[1], s1[2], s2[1], s2[2], s3[1], s3[2])
+            Triangle(s1[1], s1[2], s2[1], s2[2], s3[1], s3[2], t[4], t[5], t[6])
          end
       end
-      love.graphics.setColor(255, 255, 255, 1)
    end
+
+   IMAGE:replacePixels(CANVAS)
+   love.graphics.draw(IMAGE, 0, 0, 0, love.graphics.getWidth() / WIDTH, love.graphics.getHeight() / HEIGHT, 0, 0)
 end
