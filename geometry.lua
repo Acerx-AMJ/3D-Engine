@@ -83,6 +83,43 @@ end
 
 -- New geometry
 
+local faceTriangles = {
+   {1, 2, 4},
+   {2, 3, 4},
+}
+
+function NewFace(x, y, z, w, h, rx, ry, rz, colors)
+   local vertices = {
+      {x, y, z},
+      {x + w, y, z},
+      {x + w, y + h, z},
+      {x, y + h, z}
+   }
+
+   local origin = setupShapesOrigin(vertices)
+   local points = {}
+   setupShapesVerticesBasedOnRotation(vertices, points, origin.ox, origin.oy, origin.oz, rx, ry, rz)
+
+   return {
+      x = x,
+      y = y,
+      z = z,
+      w = w,
+      h = h,
+      d = 0,
+      ox = origin.ox,
+      oy = origin.oy,
+      oz = origin.oz,
+      rx = rx,
+      ry = ry,
+      rz = rz,
+      triangles = faceTriangles,
+      vertices = vertices,
+      points = points,
+      colors = colors
+   }
+end
+
 local cubeTriangles = {
    {8, 7, 6},
    {6, 5, 8},

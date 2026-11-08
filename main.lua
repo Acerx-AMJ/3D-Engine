@@ -19,12 +19,13 @@ function love.load()
    IMAGE = love.graphics.newImage(CANVAS)
    IMAGE:setFilter("nearest", "nearest")
 
-   table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   table.insert(geometry, NewCube(2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   table.insert(geometry, NewWedge(-2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
+   -- table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   -- table.insert(geometry, NewCube(2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   -- table.insert(geometry, NewWedge(-2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
 
-   table.insert(geometry, NewCube(2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   table.insert(geometry, NewWedge(3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
+   -- table.insert(geometry, NewCube(2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
+   -- table.insert(geometry, NewWedge(3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
+   table.insert(geometry, NewFace(0, 0, 1, 1, 1, 0, 0, 0, {Red, Blue, Green, Yellow, Yellow, Yellow}))
 end
 
 function love.draw()
@@ -68,13 +69,13 @@ function love.draw()
 
    -- Update geometry
    timer = timer + love.timer.getDelta()
-   MoveGeometry(geometry[1], geometry[1].x, math.sin(timer), geometry[1].z)
+   -- MoveGeometry(geometry[1], geometry[1].x, math.sin(timer), geometry[1].z)
 
-   ScaleGeometry(geometry[2], 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5)
-   RotateGeometry(geometry[2], 0, timer * 2, 0)
+   -- ScaleGeometry(geometry[2], 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5, 1.5 + math.sin(timer) * 0.5)
+   -- RotateGeometry(geometry[2], 0, timer * 2, 0)
 
-   ScaleGeometry(geometry[3], 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5)
-   RotateGeometry(geometry[3], timer, 0, 0)
+   -- ScaleGeometry(geometry[3], 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5, 1 + math.cos(timer) * 0.5)
+   -- RotateGeometry(geometry[3], timer, 0, 0)
 
    -- Sort triangles
    local triangles = {}
