@@ -2,6 +2,30 @@ function Vec2(x, y)
    return {x = x, y = y}
 end
 
+function Vec2Add(p1, p2)
+   return {x = p1.x + p2.x, y = p1.y + p2.y}
+end
+
+function Vec2Sub(p1, p2)
+   return {x = p1.x - p2.x, y = p1.y - p2.y}
+end
+
+function Vec2Mul(p1, f)
+   return {x = p1.x * f, y = p1.y * f}
+end
+
+function Vec2Mul2(p1, p2)
+   return {x = p1.x * p2.x, y = p1.y * p2.y}
+end
+
+function Vec2Div(p1, f)
+   return {x = p1.x / f, y = p1.y / f}
+end
+
+function Vec2Div2(p1, p2)
+   return {x = p1.x / p2.x, y = p1.y / p2.y}
+end
+
 function Vec3(x, y, z)
    return {x = x, y = y, z = z}
 end
@@ -36,6 +60,10 @@ end
 
 function Vec4(x, y, z, w)
    return {x = x, y = y, z = z, w = w}
+end
+
+function Clamp(x, lo, hi)
+   return x < lo and lo or (x > hi and hi or x)
 end
 
 function Rotate3D(pos, rotation)
@@ -78,8 +106,11 @@ function TranslateToScreen(p)
    return Vec2(x2d, y2d)
 end
 
-function Clamp(x, lo, hi)
-   return x < lo and lo or (x > hi and hi or x)
+function TranslateTriangleToScreen(p1, p2, p3)
+   local tp1 = TranslateToScreen(p1)
+   local tp2 = TranslateToScreen(p2)
+   local tp3 = TranslateToScreen(p3)
+   return tp1, tp2, tp3
 end
 
 function TriangleNormalZ(p1, p2, p3)
@@ -124,6 +155,13 @@ function TriangleUVData(z, uv)
    return Vec3(1 / z, uv.x / z, uv.y / z)
 end
 
+function TriangleFullUVData(z1, uv1, z2, uv2, z3, uv3)
+   local uvd1 = TriangleUVData(z1, uv1)
+   local uvd2 = TriangleUVData(z2, uv2)
+   local uvd3 = TriangleUVData(z3, uv3)
+   return uvd1, uvd2, uvd3
+end
+
 function TriangleUV(w1, w2, w3, uv1, uv2, uv3)
    local k = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
    local r = w1 * uv1.y + w2 * uv2.y + w3 * uv3.y
@@ -132,9 +170,50 @@ function TriangleUV(w1, w2, w3, uv1, uv2, uv3)
 end
 
 function TriangleUVTextureCoords(u, v, twidth, theight)
-   local tx = math.max(0, math.min(u * twidth, twidth - 1))
-   local ty = math.max(0, math.min(theight - (v * theight), theight - 1))
+   local tx = Clamp(u * twidth, 0, twidth - 1)
+   local ty = Clamp(theight - (v * theight), 0, theight - 1)
    return tx, ty
+end
+
+function TriangleCrossingPoint(n, p1, p2)
+   return Vec3Add(p1, Vec3Mul(Vec3Sub(p2, p1), n))
+end
+
+function NearPlaneClipping(t)
+   local p1front = (t.p1.z >= NEAR_CLIP)
+   local p2front = (t.p2.z >= NEAR_CLIP)
+   local p3front = (t.p3.z >= NEAR_CLIP)
+
+   if not p1front and not p2front and not p3front then
+      return {}
+   end
+
+   local newVertices = {}
+   local function HandleEdge(p1, p2, uv1, uv2, f1, f2)
+      if f1 then
+         table.insert(newVertices, {p = p1, uv = uv1})
+      end
+
+      if f1 ~= f2 then
+         local t = (NEAR_CLIP - p1.z) / (p2.z - p1.z)
+         local p3 = Vec3Add(p1, Vec3Mul(Vec3Sub(p2, p1), t))
+         local uv3 = Vec2Add(uv1, Vec2Mul(Vec2Sub(uv2, uv1), t))
+         table.insert(newVertices, {p = p3, uv = uv3})
+      end
+   end
+
+   HandleEdge(t.p1, t.p2, t.uv1, t.uv2, p1front, p2front)
+   HandleEdge(t.p2, t.p3, t.uv2, t.uv3, p2front, p3front)
+   HandleEdge(t.p3, t.p1, t.uv3, t.uv1, p3front, p1front)
+
+   if #newVertices == 3 then
+      local triangle = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.texture)
+      return {triangle}
+   else
+      local triangle1 = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.texture)
+      local triangle2 = MakeTriangle(newVertices[1].p, newVertices[3].p, newVertices[4].p, newVertices[1].uv, newVertices[3].uv, newVertices[4].uv, t.texture)
+      return {triangle1, triangle2}
+   end
 end
 
 function DrawTriangleColor(p1, p2, p3, color)

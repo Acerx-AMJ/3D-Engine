@@ -1,5 +1,6 @@
 WIDTH = 200
 HEIGHT = 200
+NEAR_CLIP = 0.01
 CANVAS = nil
 IMAGE = nil
 
@@ -19,17 +20,9 @@ function love.load()
    IMAGE = love.graphics.newImage(CANVAS)
    IMAGE:setFilter("nearest", "nearest")
 
-   -- table.insert(geometry, NewCube(0.0, 0.0, 2.0, 1.0, 1.0, 1.0, math.pi / 4, 0.0, 0.0,{Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   -- table.insert(geometry, NewCube(2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   -- table.insert(geometry, NewWedge(-2.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
-
-   -- table.insert(geometry, NewCube(2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Cyan, Cyan, Magenta, Magenta, Yellow, Yellow}))
-   -- table.insert(geometry, NewWedge(3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
-   -- table.insert(geometry, NewFace(0, 0, 1, 1, 1, 0, 0, 0, {Red, Blue, Green, Yellow, Yellow, Yellow}))
-
-   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {love.image.newImageData('assets/industrial_wall10.png')}))
+   -- insert geometry here
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {love.image.newImageData('assets/industrial_floor9.png')}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, 0, 0), {Red}))
-   -- table.insert(geometry, NewCube(Vec3(1, 0, 1), Vec3(1, 1, 1), Vec3(0, 0, 0), {Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red,}))
 end
 
 function love.update(dt)
@@ -66,11 +59,8 @@ function love.update(dt)
       offset = Vec3Add(offset, rotatedoffset)
    end
 
-   -- Update geometry
+   -- update geometry here
    timer = timer + love.timer.getDelta()
-   -- MoveGeometry(geometry[2], Vec3(geometry[2].pos.x, math.sin(timer) * 0.25, geometry[2].pos.z))
-   -- ScaleGeometry(geometry[2], Vec3(1 + math.cos(timer) * 0.5, 1 + math.sin(timer) * 0.5, 1 + math.sin(timer) * 0.5))
-   -- RotateGeometry(geometry[2], Vec3(0, 0, timer))
 end
 
 function love.draw()
@@ -108,22 +98,16 @@ function love.draw()
    local function pfunc(x, y, r, g, b, a) return 0, 0, 0, 1 end
    CANVAS:mapPixel(pfunc, 0, 0, WIDTH, HEIGHT)
 
-   for j = 1, #triangles do
-      local t = triangles[j]
-
-      if t.p1.z > 0 and t.p2.z > 0 and t.p3.z > 0 then
-         local s1 = TranslateToScreen(t.p1)
-         local s2 = TranslateToScreen(t.p2)
-         local s3 = TranslateToScreen(t.p3)
-
+   for i = 1, #triangles do
+      local output = NearPlaneClipping(triangles[i])
+      for j = 1, #output do
+         local t = output[j]
+         local s1, s2, s3 = TranslateTriangleToScreen(t.p1, t.p2, t.p3)
          if TriangleNormalZ(s1, s2, s3) <= 0 then
-            local uv1 = TriangleUVData(t.p1.z, t.uv1)
-            local uv2 = TriangleUVData(t.p2.z, t.uv2)
-            local uv3 = TriangleUVData(t.p3.z, t.uv3)
-
             if t.texture.r ~= nil and t.texture.g ~= nil and t.texture.b ~= nil then
                DrawTriangleColor(s1, s2, s3, t.texture)
             else
+               local uv1, uv2, uv3 = TriangleFullUVData(t.p1.z, t.uv1, t.p2.z, t.uv2, t.p3.z, t.uv3)
                DrawTriangleTexture(s1, s2, s3, uv1, uv2, uv3, t.texture)
             end
          end
