@@ -78,8 +78,8 @@ function NewTexture(src)
    local texture = love.image.newImageData(src)
    local width = texture:getWidth()
    local height = texture:getHeight()
-   local ffi = ffi.cast("uint8_t*", texture:getFFIPointer())
-   return {texture = texture, ffi = ffi, width = width, height = height}
+   local ffiptr = ffi.cast("uint8_t*", texture:getFFIPointer())
+   return {texture = texture, ffi = ffiptr, width = width, height = height}
 end
 
 -- triangles - x, y, z, texture index

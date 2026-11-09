@@ -47,21 +47,21 @@ function love.update(dt)
    -- Update offset
    local toffset = Vec3(0, 0, 0)
    if love.keyboard.isDown("a") then
-      toffset.x =  love.timer.getDelta()
+      toffset.x =  dt
    elseif love.keyboard.isDown("d") then
-      toffset.x = -love.timer.getDelta()
+      toffset.x = -dt
    end
 
    if love.keyboard.isDown("w") then
-      toffset.z = -love.timer.getDelta()
+      toffset.z = -dt
    elseif love.keyboard.isDown(("s")) then
-      toffset.z =  love.timer.getDelta()
+      toffset.z =  dt
    end
 
    if love.keyboard.isDown("q") then
-      toffset.y = -love.timer.getDelta()
+      toffset.y = -dt
    elseif love.keyboard.isDown(("e")) then
-      toffset.y =  love.timer.getDelta()
+      toffset.y =  dt
    end
 
    if (toffset.x ~= 0 or toffset.y ~= 0 or toffset.z ~= 0) then
@@ -70,7 +70,7 @@ function love.update(dt)
    end
 
    -- update geometry here
-   timer = timer + love.timer.getDelta()
+   timer = timer + dt
 end
 
 function love.draw()

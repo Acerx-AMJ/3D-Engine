@@ -97,10 +97,6 @@ function Rotate3DAroundOrigin(pos, origin, rotation)
 end
 
 function TranslateToScreen(p)
-   if (p.z <= 0) then
-      return Vec2(0, 0)
-   end
-
    local x2d = ((p.x / p.z + 1) / 2) * WIDTH
    local y2d = (1 - ((p.y / p.z + 1) / 2)) * HEIGHT
    return Vec2(x2d, y2d)
@@ -181,7 +177,9 @@ function NearPlaneClipping(t)
    local p2front = (t.p2.z >= NEAR_CLIP)
    local p3front = (t.p3.z >= NEAR_CLIP)
 
-   if not p1front and not p2front and not p3front then
+   if p1front and p2front and p3front then
+      return {t}
+   elseif not p1front and not p2front and not p3front then
       return {}
    end
 
@@ -223,7 +221,8 @@ function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, color)
       for dx = xmin, xmax do
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
-            local w3, w1, w2 = d1 / area, d2 / area, d3 / area
+            local ia = 1 / area
+            local w3, w1, w2 = d1 * ia, d2 * ia, d3 * ia
             local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
             local di = dx + dy * WIDTH
             if DEPTH_BUFFER[di] < z then
@@ -248,7 +247,8 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
       for dx = xmin, xmax do
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
-            local w3, w1, w2 = d1 / area, d2 / area, d3 / area
+            local ia = 1 / area
+            local w3, w1, w2 = d1 * ia, d2 * ia, d3 * ia
             local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
             local di = dx + dy * WIDTH
             if DEPTH_BUFFER[di] < z then
