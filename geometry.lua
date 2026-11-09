@@ -18,7 +18,7 @@ function SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
    end
 end
 
-function MakeGeometry(pos, size, origin, rotation, triangles, vertices, points, uv)
+function MakeGeometry(pos, size, origin, rotation, triangles, vertices, points, uv, textures)
    return {
       pos = pos,
       size = size,
@@ -28,10 +28,11 @@ function MakeGeometry(pos, size, origin, rotation, triangles, vertices, points, 
       vertices = vertices,
       points = points,
       uv = uv,
+      textures = textures,
    }
 end
 
-function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, depth, avgz)
+function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, texture, depth, avgz)
    return {
       p1 = p1,
       p2 = p2,
@@ -39,6 +40,7 @@ function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, depth, avgz)
       uv1 = uv1,
       uv2 = uv2,
       uv3 = uv3,
+      texture = texture,
       depth = depth,
       avgz = avgz,
    }
@@ -72,11 +74,14 @@ function RotateGeometry(geometry, rotation)
 end
 
 -- New geometry
+-- triangles - x, y, z, texture index
+-- uvs - u, v
+-- vertices - x, y, z
 
-function NewFace(pos, size, rotation)
+function NewFace(pos, size, rotation, textures)
    local faceTriangles = {
-      Vec3(1, 2, 4),
-      Vec3(2, 3, 4),
+      Vec4(1, 2, 4, 1),
+      Vec4(2, 3, 4, 1),
    }
 
    local faceUVs = {
@@ -96,7 +101,7 @@ function NewFace(pos, size, rotation)
    local origin = SetupShapesOrigin(vertices)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
-   return MakeGeometry(pos, size, origin, rotation, faceTriangles, vertices, points, faceUVs)
+   return MakeGeometry(pos, size, origin, rotation, faceTriangles, vertices, points, faceUVs, textures)
 end
 
 function NewCube(pos, size, rotation)
@@ -129,7 +134,7 @@ function NewCube(pos, size, rotation)
    local origin = SetupShapesOrigin(vertices)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
-   return MakeGeometry(pos, size, origin, rotation, cubeTriangles, vertices, points, nil)
+   return MakeGeometry(pos, size, origin, rotation, cubeTriangles, vertices, points, nil, nil)
 end
 
 function NewWedge(pos, size, rotation)
@@ -156,5 +161,5 @@ function NewWedge(pos, size, rotation)
    local origin = SetupShapesOrigin(vertices)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
-   return MakeGeometry(pos, size, origin, rotation, wedgeTriangles, vertices, points, nil)
+   return MakeGeometry(pos, size, origin, rotation, wedgeTriangles, vertices, points, nil, nil)
 end

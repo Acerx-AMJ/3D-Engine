@@ -34,6 +34,10 @@ function Vec3ZeroFix(p1)
    return {x = (p1.x == 0 and 1 or p1.x), y = (p1.y == 0 and 1 or p1.y), z = (p1.z == 0 and 1 or p1.z)}
 end
 
+function Vec4(x, y, z, w)
+   return {x = x, y = y, z = z, w = w}
+end
+
 function Rotate3D(pos, rotation)
    local result = Vec3(pos.x, pos.y, pos.z)
 
@@ -88,6 +92,15 @@ function TriangleSign(p1x, p1y, p2x, p2y, p3x, p3y)
    return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y)
 end
 
+function TriangleEdgeValues(dx, dy, p1, p2, p3)
+   local x = dx + 0.5
+   local y = dy + 0.5
+   local d1 = TriangleSign(x, y, p1.x, p1.y, p2.x, p2.y)
+   local d2 = TriangleSign(x, y, p2.x, p2.y, p3.x, p3.y)
+   local d3 = TriangleSign(x, y, p3.x, p3.y, p1.x, p1.y)
+   return d1, d2, d3
+end
+
 function TriangleBoundingBox(p1, p2, p3)
    local xmin = Clamp(math.floor(math.min(p1.x, p2.x, p3.x)), 0, WIDTH - 1)
    local xmax = Clamp(math.ceil(math.max(p1.x, p2.x, p3.x)), 0, WIDTH - 1)
@@ -118,22 +131,43 @@ function TriangleUV(w1, w2, w3, uv1, uv2, uv3)
    return r / k, g / k
 end
 
-function DrawTriangle(p1, p2, p3, uv1, uv2, uv3)
+function TriangleUVTextureCoords(u, v, twidth, theight)
+   local tx = math.max(0, math.min(u * twidth, twidth - 1))
+   local ty = math.max(0, math.min(theight - (v * theight), theight - 1))
+   return tx, ty
+end
+
+function DrawTriangleColor(p1, p2, p3, color)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
 
    for dy = ymin, ymax do
       for dx = xmin, xmax do
-         local x = dx + 0.5
-         local y = dy + 0.5
-         local d1 = TriangleSign(x, y, p1.x, p1.y, p2.x, p2.y)
-         local d2 = TriangleSign(x, y, p2.x, p2.y, p3.x, p3.y)
-         local d3 = TriangleSign(x, y, p3.x, p3.y, p1.x, p1.y)
+         local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
+         if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
+            CANVAS:setPixel(dx, dy, color.r, color.g, color.b, 1.0)
+         end
+      end
+   end
+end
+
+function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
+   local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
+   local area = TriangleArea(p1, p2, p3)
+   if (area == 0.0) then return end
+   local twidth = texture:getWidth()
+   local theight = texture:getHeight()
+
+   for dy = ymin, ymax do
+      for dx = xmin, xmax do
+         local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
             local w3, w1, w2 = d1 / area, d2 / area, d3 / area
             local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
-            CANVAS:setPixel(dx, dy, u, v, 0.0, 1.0)
+            local tx, ty = TriangleUVTextureCoords(u, v, twidth, theight)
+            local r, g, b, a = texture:getPixel(tx, ty)
+            CANVAS:setPixel(dx, dy, r, g, b, a)
          end
       end
    end
