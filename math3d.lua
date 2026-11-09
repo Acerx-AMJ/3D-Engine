@@ -216,7 +216,7 @@ function NearPlaneClipping(t)
    end
 end
 
-function DrawTriangleColor(p1, p2, p3, color)
+function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, color)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
@@ -225,7 +225,13 @@ function DrawTriangleColor(p1, p2, p3, color)
       for dx = xmin, xmax do
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
-            CANVAS:setPixel(dx, dy, color.r, color.g, color.b, 1.0)
+            local w3, w1, w2 = d1 / area, d2 / area, d3 / area
+            local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
+            local di = dx + dy * WIDTH + 1
+            if DEPTH_BUFFER[di] < z then
+               DEPTH_BUFFER[di] = z;
+               CANVAS:setPixel(dx, dy, color.r, color.g, color.b, 1.0)
+            end
          end
       end
    end
@@ -243,10 +249,15 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
             local w3, w1, w2 = d1 / area, d2 / area, d3 / area
-            local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
-            local tx, ty = TriangleUVTextureCoords(u, v, twidth, theight)
-            local r, g, b, a = texture:getPixel(tx, ty)
-            CANVAS:setPixel(dx, dy, r, g, b, a)
+            local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
+            local di = dx + dy * WIDTH + 1
+            if DEPTH_BUFFER[di] < z then
+               DEPTH_BUFFER[di] = z;
+               local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
+               local tx, ty = TriangleUVTextureCoords(u, v, twidth, theight)
+               local r, g, b, a = texture:getPixel(tx, ty)
+               CANVAS:setPixel(dx, dy, r, g, b, a)
+            end
          end
       end
    end

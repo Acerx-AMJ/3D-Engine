@@ -4,6 +4,9 @@ NEAR_CLIP = 0.01
 CANVAS = nil
 IMAGE = nil
 
+DEPTH_BUFFER_SIZE = WIDTH * HEIGHT
+DEPTH_BUFFER = {}
+
 require("colors")
 require("geometry")
 
@@ -22,7 +25,10 @@ function love.load()
 
    -- insert geometry here
    table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {love.image.newImageData('assets/industrial_floor9.png')}))
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {love.image.newImageData('assets/industrial_floor5.png')}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, 0, 0), {Red}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(math.pi / 2, 0, 0), {Blue}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, math.pi / 2, 0), {Green}))
 end
 
 function love.update(dt)
@@ -66,37 +72,31 @@ end
 function love.draw()
    love.graphics.clear(0, 0, 0, 1, true)
 
-   -- Sort triangles
    local triangles = {}
    for j = 1, #geometry do
       local shape = geometry[j]
       local points = {}
-      local z = 0
 
       for i = 1, #shape.points do
          local pos = shape.points[i]
          points[i] = Rotate3D(Vec3Add(pos, offset), rotation)
-         z = z + points[i].z
       end
 
       for i = 1, #shape.triangles do
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t.x], points[t.y], points[t.z]
-         local depth = math.min(p1.z, p2.z, p3.z)
-         table.insert(triangles, MakeTriangle(p1, p2, p3, shape.uv[t.x], shape.uv[t.y], shape.uv[t.z], shape.textures[t.w], depth, z / #points))
+         local uv1, uv2, uv3 = shape.uv[t.x], shape.uv[t.y], shape.uv[t.z]
+         table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, shape.textures[t.w]))
       end
    end
-
-   table.sort(triangles, function(a, b)
-      if (a.avgz ~= b.avgz) then
-         return a.avgz > b.avgz
-      end
-      return a.depth > b.depth
-   end)
 
    -- Draw triangles
    local function pfunc(x, y, r, g, b, a) return 0, 0, 0, 1 end
    CANVAS:mapPixel(pfunc, 0, 0, WIDTH, HEIGHT)
+
+   for i = 1, DEPTH_BUFFER_SIZE do
+      DEPTH_BUFFER[i] = 0
+   end
 
    for i = 1, #triangles do
       local output = NearPlaneClipping(triangles[i])
@@ -104,10 +104,10 @@ function love.draw()
          local t = output[j]
          local s1, s2, s3 = TranslateTriangleToScreen(t.p1, t.p2, t.p3)
          if TriangleNormalZ(s1, s2, s3) <= 0 then
+            local uv1, uv2, uv3 = TriangleFullUVData(t.p1.z, t.uv1, t.p2.z, t.uv2, t.p3.z, t.uv3)
             if t.texture.r ~= nil and t.texture.g ~= nil and t.texture.b ~= nil then
-               DrawTriangleColor(s1, s2, s3, t.texture)
+               DrawTriangleColor(s1, s2, s3, uv1, uv2, uv3, t.texture)
             else
-               local uv1, uv2, uv3 = TriangleFullUVData(t.p1.z, t.uv1, t.p2.z, t.uv2, t.p3.z, t.uv3)
                DrawTriangleTexture(s1, s2, s3, uv1, uv2, uv3, t.texture)
             end
          end
