@@ -82,14 +82,18 @@ function NewTexture(src)
    return {texture = texture, ffi = ffiptr, width = width, height = height}
 end
 
--- triangles - x, y, z, texture index
+function Tr6(x, y, z, uv1, uv2, uv3, texture)
+   return {x = x, y = y, z = z, uv1 = uv1, uv2 = uv2, uv3 = uv3, texture = texture}
+end
+
+-- triangles - x, y, z, uv1, uv2, uv3, texture index
 -- uvs - u, v
 -- vertices - x, y, z
 
 function NewFace(pos, size, rotation, textures)
    local faceTriangles = {
-      Vec4(1, 2, 4, 1),
-      Vec4(2, 3, 4, 1),
+      Tr6(1, 2, 4, 1, 2, 4, 1),
+      Tr6(2, 3, 4, 2, 3, 4, 1),
    }
 
    local faceUVs = {
@@ -112,20 +116,27 @@ function NewFace(pos, size, rotation, textures)
    return MakeGeometry(pos, size, origin, rotation, faceTriangles, vertices, points, faceUVs, textures)
 end
 
-function NewCube(pos, size, rotation)
+function NewCube(pos, size, rotation, textures)
    local cubeTriangles = {
-      Vec3(8, 7, 6),
-      Vec3(6, 5, 8),
-      Vec3(4, 8, 5),
-      Vec3(5, 1, 4),
-      Vec3(3, 4, 1),
-      Vec3(1, 2, 3),
-      Vec3(7, 3, 2),
-      Vec3(2, 6, 7),
-      Vec3(5, 6, 2),
-      Vec3(2, 1, 5),
-      Vec3(4, 3, 7),
-      Vec3(7, 8, 4),
+      Tr6(8, 7, 6, 1, 2, 3, 1),
+      Tr6(6, 5, 8, 3, 4, 1, 1),
+      Tr6(4, 8, 5, 1, 2, 3, 2),
+      Tr6(5, 1, 4, 3, 4, 1, 2),
+      Tr6(3, 4, 1, 1, 2, 3, 3),
+      Tr6(1, 2, 3, 3, 4, 1, 3),
+      Tr6(7, 3, 2, 1, 2, 3, 4),
+      Tr6(2, 6, 7, 3, 4, 1, 4),
+      Tr6(5, 6, 2, 1, 2, 3, 5),
+      Tr6(2, 1, 5, 3, 4, 1, 5),
+      Tr6(4, 3, 7, 1, 2, 3, 6),
+      Tr6(7, 8, 4, 3, 4, 1, 6),
+   }
+
+   local cubeUVs = {
+      Vec2(0, 0),
+      Vec2(1, 0),
+      Vec2(1, 1),
+      Vec2(0, 1),
    }
 
    local vertices = {
@@ -142,7 +153,7 @@ function NewCube(pos, size, rotation)
    local origin = SetupShapesOrigin(vertices)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
-   return MakeGeometry(pos, size, origin, rotation, cubeTriangles, vertices, points, nil, nil)
+   return MakeGeometry(pos, size, origin, rotation, cubeTriangles, vertices, points, cubeUVs, textures)
 end
 
 function NewWedge(pos, size, rotation)

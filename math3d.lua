@@ -58,10 +58,6 @@ function Vec3ZeroFix(p1)
    return {x = (p1.x == 0 and 1 or p1.x), y = (p1.y == 0 and 1 or p1.y), z = (p1.z == 0 and 1 or p1.z)}
 end
 
-function Vec4(x, y, z, w)
-   return {x = x, y = y, z = z, w = w}
-end
-
 function Clamp(x, lo, hi)
    return x < lo and lo or (x > hi and hi or x)
 end

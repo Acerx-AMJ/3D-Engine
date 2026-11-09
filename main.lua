@@ -28,11 +28,20 @@ function love.load()
    CANVAS_FFI = ffi.cast("uint8_t*", CANVAS:getFFIPointer())
 
    -- insert geometry here
-   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {NewTexture('assets/industrial_floor9.png')}))
-   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {NewTexture('assets/industrial_floor5.png')}))
-   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, 0, 0), {Red}))
-   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(math.pi / 2, 0, 0), {Blue}))
-   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, math.pi / 2, 0), {Green}))
+   local floor5 = NewTexture('assets/industrial_floor5.png')
+   local floor9 = NewTexture('assets/industrial_floor9.png')
+   local wall8 = NewTexture('assets/industrial_wall8.png')
+
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {floor9}))
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {floor5}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(0, 0, 0), {Red}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi / 2, 0, 0), {Blue}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(0, math.pi / 2, 0), {Green}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi, 0, 0), {Red}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi * 1.5, 0, 0), {Blue}))
+   table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(0, math.pi * 1.5, 0), {Green}))
+
+   table.insert(geometry, NewCube(Vec3(0, 0, -2), Vec3(1, 1, 1), Vec3(0, 0, 0), {wall8, wall8, wall8, wall8, floor9, floor9}))
 end
 
 function love.update(dt)
@@ -89,8 +98,8 @@ function love.draw()
       for i = 1, #shape.triangles do
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t.x], points[t.y], points[t.z]
-         local uv1, uv2, uv3 = shape.uv[t.x], shape.uv[t.y], shape.uv[t.z]
-         table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, shape.textures[t.w]))
+         local uv1, uv2, uv3 = shape.uv[t.uv1], shape.uv[t.uv2], shape.uv[t.uv3]
+         table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, shape.textures[t.texture]))
       end
    end
 
