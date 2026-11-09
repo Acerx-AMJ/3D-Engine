@@ -84,8 +84,8 @@ function TriangleNormalZ(p1, p2, p3)
    return ax * by - ay * bx
 end
 
-function TriangleSign(p1, p2, p3)
-   return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+function TriangleSign(p1x, p1y, p2x, p2y, p3x, p3y)
+   return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y)
 end
 
 function TriangleBoundingBox(p1, p2, p3)
@@ -100,20 +100,40 @@ function TriangleArea(p1, p2, p3)
    return 1.0 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))
 end
 
-function DrawTriangle(p1, p2, p3, c1, c2, c3)
+function TriangleColorWeight(w1, w2, w3, c1, c2, c3)
+   local r = w1 * c1.r + w2 * c2.r + w3 * c3.r
+   local g = w1 * c1.g + w2 * c2.g + w3 * c3.g
+   local b = w1 * c1.b + w2 * c2.b + w3 * c3.b
+   return r, g, b
+end
+
+function TriangleUVData(z, uv)
+   return Vec3(1 / z, uv.x / z, uv.y / z)
+end
+
+function TriangleUV(w1, w2, w3, uv1, uv2, uv3)
+   local k = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
+   local r = w1 * uv1.y + w2 * uv2.y + w3 * uv3.y
+   local g = w1 * uv1.z + w2 * uv2.z + w3 * uv3.z
+   return r / k, g / k
+end
+
+function DrawTriangle(p1, p2, p3, uv1, uv2, uv3)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
 
    for dy = ymin, ymax do
       for dx = xmin, xmax do
-         local pos = Vec2(dx + 0.5, dy + 0.5)
-         local d1 = TriangleSign(pos, p1, p2)
-         local d2 = TriangleSign(pos, p2, p3)
-         local d3 = TriangleSign(pos, p3, p1)
+         local x = dx + 0.5
+         local y = dy + 0.5
+         local d1 = TriangleSign(x, y, p1.x, p1.y, p2.x, p2.y)
+         local d2 = TriangleSign(x, y, p2.x, p2.y, p3.x, p3.y)
+         local d3 = TriangleSign(x, y, p3.x, p3.y, p1.x, p1.y)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
             local w3, w1, w2 = d1 / area, d2 / area, d3 / area
-            CANVAS:setPixel(dx, dy, w1, w2, w3, 1.0)
+            local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
+            CANVAS:setPixel(dx, dy, u, v, 0.0, 1.0)
          end
       end
    end

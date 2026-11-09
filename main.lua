@@ -27,7 +27,8 @@ function love.load()
    -- table.insert(geometry, NewWedge(3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, {Red, Red, Green, Green, Blue, Blue, Yellow, Yellow}))
    -- table.insert(geometry, NewFace(0, 0, 1, 1, 1, 0, 0, 0, {Red, Blue, Green, Yellow, Yellow, Yellow}))
 
-   table.insert(geometry, NewFace(Vec3(0, 0, 1), Vec3(1, 1, 0), Vec3(0, 0, 0), {Red, Blue, Green, Yellow, Yellow, Yellow}))
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0)))
+   -- table.insert(geometry, NewCube(Vec3(1, 0, 1), Vec3(1, 1, 1), Vec3(0, 0, 0), {Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red, Red, Green, Blue, Blue, Green, Red,}))
 end
 
 function love.update(dt)
@@ -66,9 +67,9 @@ function love.update(dt)
 
    -- Update geometry
    timer = timer + love.timer.getDelta()
-   -- MoveGeometry(geometry[1], Vec3(geometry[1].pos.x, math.sin(timer), geometry[1].pos.z))
-   -- ScaleGeometry(geometry[1], Vec3(1 + math.cos(timer) * 0.5, 1 + math.sin(timer) * 0.5, 0))
-   -- RotateGeometry(geometry[1], Vec3(0, 0, timer))
+   -- MoveGeometry(geometry[2], Vec3(geometry[2].pos.x, math.sin(timer) * 0.25, geometry[2].pos.z))
+   -- ScaleGeometry(geometry[2], Vec3(1 + math.cos(timer) * 0.5, 1 + math.sin(timer) * 0.5, 1 + math.sin(timer) * 0.5))
+   -- RotateGeometry(geometry[2], Vec3(0, 0, timer))
 end
 
 function love.draw()
@@ -91,7 +92,7 @@ function love.draw()
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t.x], points[t.y], points[t.z]
          local depth = math.min(p1.z, p2.z, p3.z)
-         table.insert(triangles, MakeTriangle(p1, p2, p3, shape.colors[i*3-2], shape.colors[i*3-1], shape.colors[i*3], depth, z / #points))
+         table.insert(triangles, MakeTriangle(p1, p2, p3, shape.uv[t.x], shape.uv[t.y], shape.uv[t.z], depth, z / #points))
       end
    end
 
@@ -115,7 +116,10 @@ function love.draw()
          local s3 = TranslateToScreen(t.p3)
 
          if TriangleNormalZ(s1, s2, s3) <= 0 then
-            DrawTriangle(s1, s2, s3, t.c1, t.c2, t.c3)
+            local uv1 = TriangleUVData(t.p1.z, t.uv1)
+            local uv2 = TriangleUVData(t.p2.z, t.uv2)
+            local uv3 = TriangleUVData(t.p3.z, t.uv3)
+            DrawTriangle(s1, s2, s3, uv1, uv2, uv3)
          end
       end
    end
