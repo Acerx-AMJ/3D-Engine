@@ -144,13 +144,6 @@ function TriangleArea(p1, p2, p3)
    return 1.0 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))
 end
 
-function TriangleColorWeight(w1, w2, w3, c1, c2, c3)
-   local r = w1 * c1.r + w2 * c2.r + w3 * c3.r
-   local g = w1 * c1.g + w2 * c2.g + w3 * c3.g
-   local b = w1 * c1.b + w2 * c2.b + w3 * c3.b
-   return r, g, b
-end
-
 function TriangleUVData(z, uv)
    return Vec3(1 / z, uv.x / z, uv.y / z)
 end
@@ -170,13 +163,17 @@ function TriangleUV(w1, w2, w3, uv1, uv2, uv3)
 end
 
 function TriangleUVTextureCoords(u, v, twidth, theight)
-   local tx = Clamp(u * twidth, 0, twidth - 1)
-   local ty = Clamp(theight - (v * theight), 0, theight - 1)
+   local tx = math.floor(Clamp(u * twidth, 0, twidth - 1))
+   local ty = math.floor(Clamp(theight - (v * theight), 0, theight - 1))
    return tx, ty
 end
 
-function TriangleCrossingPoint(n, p1, p2)
-   return Vec3Add(p1, Vec3Mul(Vec3Sub(p2, p1), n))
+function ToFFIColor(r, g, b, a)
+   local nr = math.floor(Clamp(r * 255, 0, 255))
+   local ng = math.floor(Clamp(g * 255, 0, 255))
+   local nb = math.floor(Clamp(b * 255, 0, 255))
+   local na = math.floor(Clamp(a * 255, 0, 255))
+   return nr, ng, nb, na
 end
 
 function NearPlaneClipping(t)
@@ -220,6 +217,7 @@ function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, color)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
+   local r, g, b, a = ToFFIColor(color.r, color.g, color.b, 1.0)
 
    for dy = ymin, ymax do
       for dx = xmin, xmax do
@@ -227,10 +225,14 @@ function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, color)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
             local w3, w1, w2 = d1 / area, d2 / area, d3 / area
             local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
-            local di = dx + dy * WIDTH + 1
+            local di = dx + dy * WIDTH
             if DEPTH_BUFFER[di] < z then
                DEPTH_BUFFER[di] = z;
-               CANVAS:setPixel(dx, dy, color.r, color.g, color.b, 1.0)
+               local ci = 4 * di
+               CANVAS_FFI[ci] = r;
+               CANVAS_FFI[ci + 1] = g;
+               CANVAS_FFI[ci + 2] = b;
+               CANVAS_FFI[ci + 3] = a;
             end
          end
       end
@@ -241,8 +243,6 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
-   local twidth = texture:getWidth()
-   local theight = texture:getHeight()
 
    for dy = ymin, ymax do
       for dx = xmin, xmax do
@@ -250,13 +250,17 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
             local w3, w1, w2 = d1 / area, d2 / area, d3 / area
             local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
-            local di = dx + dy * WIDTH + 1
+            local di = dx + dy * WIDTH
             if DEPTH_BUFFER[di] < z then
                DEPTH_BUFFER[di] = z;
                local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
-               local tx, ty = TriangleUVTextureCoords(u, v, twidth, theight)
-               local r, g, b, a = texture:getPixel(tx, ty)
-               CANVAS:setPixel(dx, dy, r, g, b, a)
+               local tx, ty = TriangleUVTextureCoords(u, v, texture.width, texture.height)
+               local ti = 4 * (tx + ty * texture.width)
+               local ci = 4 * di
+               CANVAS_FFI[ci] = texture.ffi[ti];
+               CANVAS_FFI[ci + 1] = texture.ffi[ti + 1];
+               CANVAS_FFI[ci + 2] = texture.ffi[ti + 2];
+               CANVAS_FFI[ci + 3] = texture.ffi[ti + 3];
             end
          end
       end

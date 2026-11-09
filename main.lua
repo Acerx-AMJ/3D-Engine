@@ -1,11 +1,14 @@
+local ffi = require("ffi")
+
 WIDTH = 200
 HEIGHT = 200
 NEAR_CLIP = 0.01
+CANVAS_FFI = nil
 CANVAS = nil
 IMAGE = nil
 
 DEPTH_BUFFER_SIZE = WIDTH * HEIGHT
-DEPTH_BUFFER = {}
+DEPTH_BUFFER = ffi.new("float[?]", DEPTH_BUFFER_SIZE)
 
 require("colors")
 require("geometry")
@@ -18,14 +21,15 @@ local timer = 0
 
 function love.load()
    love.window.setTitle("3D Engine")
-   love.window.setMode(800, 800)
+   love.window.setMode(800, 800, {vsync=0})
    CANVAS = love.image.newImageData(WIDTH, HEIGHT)
    IMAGE = love.graphics.newImage(CANVAS)
    IMAGE:setFilter("nearest", "nearest")
+   CANVAS_FFI = ffi.cast("uint8_t*", CANVAS:getFFIPointer())
 
    -- insert geometry here
-   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {love.image.newImageData('assets/industrial_floor9.png')}))
-   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {love.image.newImageData('assets/industrial_floor5.png')}))
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {NewTexture('assets/industrial_floor9.png')}))
+   table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {NewTexture('assets/industrial_floor5.png')}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, 0, 0), {Red}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(math.pi / 2, 0, 0), {Blue}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1, 0), Vec3(0, math.pi / 2, 0), {Green}))
@@ -91,12 +95,8 @@ function love.draw()
    end
 
    -- Draw triangles
-   local function pfunc(x, y, r, g, b, a) return 0, 0, 0, 1 end
-   CANVAS:mapPixel(pfunc, 0, 0, WIDTH, HEIGHT)
-
-   for i = 1, DEPTH_BUFFER_SIZE do
-      DEPTH_BUFFER[i] = 0
-   end
+   ffi.fill(CANVAS_FFI, WIDTH * HEIGHT * 4, 0)
+   ffi.fill(DEPTH_BUFFER, DEPTH_BUFFER_SIZE * ffi.sizeof("float"), 0)
 
    for i = 1, #triangles do
       local output = NearPlaneClipping(triangles[i])
@@ -105,10 +105,10 @@ function love.draw()
          local s1, s2, s3 = TranslateTriangleToScreen(t.p1, t.p2, t.p3)
          if TriangleNormalZ(s1, s2, s3) <= 0 then
             local uv1, uv2, uv3 = TriangleFullUVData(t.p1.z, t.uv1, t.p2.z, t.uv2, t.p3.z, t.uv3)
-            if t.texture.r ~= nil and t.texture.g ~= nil and t.texture.b ~= nil then
-               DrawTriangleColor(s1, s2, s3, uv1, uv2, uv3, t.texture)
-            else
+            if t.texture.ffi ~= nil and t.texture.width ~= nil and t.texture.height ~= nil then
                DrawTriangleTexture(s1, s2, s3, uv1, uv2, uv3, t.texture)
+            else
+               DrawTriangleColor(s1, s2, s3, uv1, uv2, uv3, t.texture)
             end
          end
       end

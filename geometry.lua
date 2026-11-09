@@ -1,3 +1,4 @@
+local ffi = require("ffi")
 require("math3d")
 
 -- Geometry creation functions
@@ -72,6 +73,15 @@ function RotateGeometry(geometry, rotation)
 end
 
 -- New geometry
+
+function NewTexture(src)
+   local texture = love.image.newImageData(src)
+   local width = texture:getWidth()
+   local height = texture:getHeight()
+   local ffi = ffi.cast("uint8_t*", texture:getFFIPointer())
+   return {texture = texture, ffi = ffi, width = width, height = height}
+end
+
 -- triangles - x, y, z, texture index
 -- uvs - u, v
 -- vertices - x, y, z
