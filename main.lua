@@ -41,7 +41,8 @@ function love.load()
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi * 1.5, 0, 0), {Blue}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(0, math.pi * 1.5, 0), {Green}))
 
-   table.insert(geometry, NewCube(Vec3(0, 0, -2), Vec3(1, 1, 1), Vec3(0, 0, 0), {wall8, wall8, wall8, wall8, floor9, floor9}))
+   table.insert(geometry, NewCube(Vec3(1, 0, -2), Vec3(1, 1, 1), Vec3(0, math.pi, 0), {wall8, wall8, wall8, wall8, floor9, floor9}))
+   table.insert(geometry, NewWedge(Vec3(0, 0, -2), Vec3(1, 1, 1), Vec3(0, math.pi, 0), {wall8, floor9, wall8, wall8, floor9}))
 end
 
 function love.update(dt)

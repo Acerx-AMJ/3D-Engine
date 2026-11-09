@@ -3,13 +3,15 @@ require("math3d")
 
 -- Geometry creation functions
 
-function SetupShapesOrigin(vertices)
-   local origin = Vec3(0.0, 0.0, 0.0)
-   for i = 1, #vertices do
-      local pos = vertices[i]
-      origin = Vec3Add(origin, pos)
-   end
-   return Vec3Div(origin, #vertices)
+function SetupShapesOrigin(pos, size)
+   return Vec3Add(pos, Vec3Mul(size, 0.5))
+
+   -- local origin = Vec3(0.0, 0.0, 0.0)
+   -- for i = 1, #vertices do
+   --    local pos = vertices[i]
+   --    origin = Vec3Add(origin, pos)
+   -- end
+   -- return Vec3Div(origin, #vertices)
 end
 
 function SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
@@ -52,7 +54,7 @@ function MoveGeometry(geometry, offset)
       geometry.vertices[i] = Vec3Add(Vec3Sub(geometry.vertices[i], geometry.pos), offset)
    end
    geometry.pos = offset;
-   geometry.origin = SetupShapesOrigin(geometry.vertices)
+   geometry.origin = SetupShapesOrigin(geometry.pos, geometry.size)
    SetupShapesVerticesBasedOnRotation(geometry.vertices, geometry.points, geometry.origin, geometry.rotation)
 end
 
@@ -63,7 +65,7 @@ function ScaleGeometry(geometry, scale)
    end
 
    geometry.size = scale;
-   geometry.origin = SetupShapesOrigin(geometry.vertices)
+   geometry.origin = SetupShapesOrigin(geometry.pos, geometry.size)
    SetupShapesVerticesBasedOnRotation(geometry.vertices, geometry.points, geometry.origin, geometry.rotation)
 end
 
@@ -110,7 +112,7 @@ function NewFace(pos, size, rotation, textures)
       Vec3(pos.x, pos.y + size.y, pos.z),
    }
 
-   local origin = SetupShapesOrigin(vertices)
+   local origin = SetupShapesOrigin(pos, size)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
    return MakeGeometry(pos, size, origin, rotation, faceTriangles, vertices, points, faceUVs, textures)
@@ -150,22 +152,29 @@ function NewCube(pos, size, rotation, textures)
       Vec3(pos.x, pos.y, pos.z),
    }
 
-   local origin = SetupShapesOrigin(vertices)
+   local origin = SetupShapesOrigin(pos, size)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
    return MakeGeometry(pos, size, origin, rotation, cubeTriangles, vertices, points, cubeUVs, textures)
 end
 
-function NewWedge(pos, size, rotation)
+function NewWedge(pos, size, rotation, textures)
    local wedgeTriangles = {
-      Vec3(1, 2, 3),
-      Vec3(3, 4, 1),
-      Vec3(4, 3, 5),
-      Vec3(5, 6, 4),
-      Vec3(1, 4, 6),
-      Vec3(5, 3, 2),
-      Vec3(5, 2, 1),
-      Vec3(1, 6, 5),
+      Tr6(1, 2, 3, 3, 4, 1, 1),
+      Tr6(3, 4, 1, 1, 2, 3, 1),
+      Tr6(4, 3, 5, 1, 2, 3, 2),
+      Tr6(5, 6, 4, 3, 4, 1, 2),
+      Tr6(1, 4, 6, 4, 1, 2, 3),
+      Tr6(5, 3, 2, 1, 2, 3, 4),
+      Tr6(5, 2, 1, 2, 3, 4, 5),
+      Tr6(1, 6, 5, 4, 1, 2, 5),
+   }
+
+   local wedgeUVs = {
+      Vec2(0, 0),
+      Vec2(1, 0),
+      Vec2(1, 1),
+      Vec2(0, 1),
    }
 
    local vertices = {
@@ -177,8 +186,8 @@ function NewWedge(pos, size, rotation)
       Vec3(pos.x, pos.y, pos.z),
    }
 
-   local origin = SetupShapesOrigin(vertices)
+   local origin = SetupShapesOrigin(pos, size)
    local points = {}
    SetupShapesVerticesBasedOnRotation(vertices, points, origin, rotation)
-   return MakeGeometry(pos, size, origin, rotation, wedgeTriangles, vertices, points, nil, nil)
+   return MakeGeometry(pos, size, origin, rotation, wedgeTriangles, vertices, points, wedgeUVs, textures)
 end
