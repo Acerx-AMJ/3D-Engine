@@ -251,7 +251,7 @@ function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, normal, color)
                CANVAS_FFI[ci]     = r * fog;
                CANVAS_FFI[ci + 1] = g * fog;
                CANVAS_FFI[ci + 2] = b * fog;
-               CANVAS_FFI[ci + 3] = a * fog;
+               CANVAS_FFI[ci + 3] = 255;
             end
          end
       end
@@ -278,7 +278,7 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, normal, texture)
                CANVAS_FFI[ci]     = math.floor(fog * Clamp(normal * texture.ffi[ti], 0, 255));
                CANVAS_FFI[ci + 1] = math.floor(fog * Clamp(normal * texture.ffi[ti + 1], 0, 255));
                CANVAS_FFI[ci + 2] = math.floor(fog * Clamp(normal * texture.ffi[ti + 2], 0, 255));
-               CANVAS_FFI[ci + 3] = math.floor(fog * Clamp(normal * texture.ffi[ti + 3], 0, 255));
+               CANVAS_FFI[ci + 3] = 255;
             end
          end
       end

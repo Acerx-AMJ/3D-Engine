@@ -2,8 +2,8 @@ local ffi = require("ffi")
 
 WIDTH = 200
 HEIGHT = 200
-LIGHT = {x = 500, y = -1000, z = 250}
-AMBIENT_FLOOR = 0.3
+LIGHT_DIR = {x = 0.436, y = -0.872, z = 0.218}
+AMBIENT = 0.6
 FOG_START = 2
 FOG_END = 10
 NEAR_CLIP = 0.01
@@ -19,7 +19,7 @@ require("colors")
 require("geometry")
 
 local rotation = Vec3(0, 0, 0)
-local offset = Vec3(0, 0, 0)
+local offset = Vec3(0, -1, 0)
 local lastmousepos = Vec2(0, 0)
 local geometry = {}
 local timer = 0
@@ -37,7 +37,7 @@ function love.load()
    local floor9 = NewTexture('assets/industrial_floor9.png')
    local wall8 = NewTexture('assets/industrial_wall8.png')
 
-   table.insert(geometry, NewFace(Vec3(-50, -50, 0), Vec3(100, 100, 0), Vec3(math.pi / 2, 0, 0), {Color(0.1, 0.1, 0.1)}))
+   table.insert(geometry, NewFace(Vec3(-50, -50, 0), Vec3(100, 100, 0), Vec3(math.pi / 2, 0, 0), {Color(0.15, 0.15, 0.15)}))
 
    table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {floor9}))
    table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {floor5}))
@@ -93,7 +93,7 @@ end
 function love.draw()
    love.graphics.clear(0, 0, 0, 1, true)
 
-   local light = Rotate3D(Vec3Add(LIGHT, offset), rotation)
+   local light = Rotate3D(LIGHT_DIR, rotation)
    local triangles = {}
    for j = 1, #geometry do
       local shape = geometry[j]
@@ -109,7 +109,7 @@ function love.draw()
          local p1, p2, p3 = points[t.x], points[t.y], points[t.z]
          local uv1, uv2, uv3 = shape.uv[t.uv1], shape.uv[t.uv2], shape.uv[t.uv3]
          local normal = Vec3Normalize(Vec3Cross(Vec3Sub(p2, p1), Vec3Sub(p3, p1)))
-         local lighting = 1.0 - Clamp(Vec3Dot(normal, Vec3Normalize(Vec3Sub(normal, light))), 0, AMBIENT_FLOOR)
+         local lighting = AMBIENT + (1 - AMBIENT) * math.max(Vec3Dot(normal, light), 0)
          table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, lighting, shape.textures[t.texture]))
       end
    end
