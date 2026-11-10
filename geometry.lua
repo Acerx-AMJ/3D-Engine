@@ -35,7 +35,7 @@ function MakeGeometry(pos, size, origin, rotation, triangles, vertices, points, 
    }
 end
 
-function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, texture)
+function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, normal, texture)
    return {
       p1 = p1,
       p2 = p2,
@@ -43,6 +43,7 @@ function MakeTriangle(p1, p2, p3, uv1, uv2, uv3, texture)
       uv1 = uv1,
       uv2 = uv2,
       uv3 = uv3,
+      normal = normal,
       texture = texture,
    }
 end

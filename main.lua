@@ -2,7 +2,12 @@ local ffi = require("ffi")
 
 WIDTH = 200
 HEIGHT = 200
+LIGHT = {x = 500, y = -1000, z = 250}
+AMBIENT_FLOOR = 0.3
+FOG_START = 2
+FOG_END = 10
 NEAR_CLIP = 0.01
+
 CANVAS_FFI = nil
 CANVAS = nil
 IMAGE = nil
@@ -31,6 +36,8 @@ function love.load()
    local floor5 = NewTexture('assets/industrial_floor5.png')
    local floor9 = NewTexture('assets/industrial_floor9.png')
    local wall8 = NewTexture('assets/industrial_wall8.png')
+
+   table.insert(geometry, NewFace(Vec3(-50, -50, 0), Vec3(100, 100, 0), Vec3(math.pi / 2, 0, 0), {Color(0.1, 0.1, 0.1)}))
 
    table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(0, 0, 0), {floor9}))
    table.insert(geometry, NewFace(Vec3(-1, 0, 3), Vec3(1, 1, 0), Vec3(math.pi / 2, 0, 0), {floor5}))
@@ -86,6 +93,7 @@ end
 function love.draw()
    love.graphics.clear(0, 0, 0, 1, true)
 
+   local light = Rotate3D(Vec3Add(LIGHT, offset), rotation)
    local triangles = {}
    for j = 1, #geometry do
       local shape = geometry[j]
@@ -100,7 +108,9 @@ function love.draw()
          local t = shape.triangles[i]
          local p1, p2, p3 = points[t.x], points[t.y], points[t.z]
          local uv1, uv2, uv3 = shape.uv[t.uv1], shape.uv[t.uv2], shape.uv[t.uv3]
-         table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, shape.textures[t.texture]))
+         local normal = Vec3Normalize(Vec3Cross(Vec3Sub(p2, p1), Vec3Sub(p3, p1)))
+         local lighting = 1.0 - Clamp(Vec3Dot(normal, Vec3Normalize(Vec3Sub(normal, light))), 0, AMBIENT_FLOOR)
+         table.insert(triangles, MakeTriangle(p1, p2, p3, uv1, uv2, uv3, lighting, shape.textures[t.texture]))
       end
    end
 
@@ -116,9 +126,9 @@ function love.draw()
          if TriangleNormalZ(s1, s2, s3) <= 0 then
             local uv1, uv2, uv3 = TriangleFullUVData(t.p1.z, t.uv1, t.p2.z, t.uv2, t.p3.z, t.uv3)
             if t.texture.ffi ~= nil and t.texture.width ~= nil and t.texture.height ~= nil then
-               DrawTriangleTexture(s1, s2, s3, uv1, uv2, uv3, t.texture)
+               DrawTriangleTexture(s1, s2, s3, uv1, uv2, uv3, t.normal, t.texture)
             else
-               DrawTriangleColor(s1, s2, s3, uv1, uv2, uv3, t.texture)
+               DrawTriangleColor(s1, s2, s3, uv1, uv2, uv3, t.normal, t.texture)
             end
          end
       end

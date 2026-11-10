@@ -58,6 +58,20 @@ function Vec3ZeroFix(p1)
    return {x = (p1.x == 0 and 1 or p1.x), y = (p1.y == 0 and 1 or p1.y), z = (p1.z == 0 and 1 or p1.z)}
 end
 
+function Vec3Cross(p1, p2)
+   return {x = p1.y * p2.z - p1.z * p2.y, y = p1.z * p2.x - p1.x * p2.z, z = p1.x * p2.y - p1.y * p2.x}
+end
+
+function Vec3Dot(p1, p2)
+   return p1.x * p2.x + p1.y * p2.y + p1.z * p2.z
+end
+
+function Vec3Normalize(p1)
+   local mag = math.sqrt(p1.x * p1.x + p1.y * p1.y + p1.z * p1.z)
+   if mag == 0 then return {x = 0, y = 0, z = 0} end
+   return {x = p1.x / mag, y = p1.y / mag, z = p1.z / mag}
+end
+
 function Clamp(x, lo, hi)
    return x < lo and lo or (x > hi and hi or x)
 end
@@ -198,43 +212,53 @@ function NearPlaneClipping(t)
    HandleEdge(t.p3, t.p1, t.uv3, t.uv1, p3front, p1front)
 
    if #newVertices == 3 then
-      local triangle = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.texture)
+      local triangle = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.normal, t.texture)
       return {triangle}
    else
-      local triangle1 = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.texture)
-      local triangle2 = MakeTriangle(newVertices[1].p, newVertices[3].p, newVertices[4].p, newVertices[1].uv, newVertices[3].uv, newVertices[4].uv, t.texture)
+      local triangle1 = MakeTriangle(newVertices[1].p, newVertices[2].p, newVertices[3].p, newVertices[1].uv, newVertices[2].uv, newVertices[3].uv, t.normal, t.texture)
+      local triangle2 = MakeTriangle(newVertices[1].p, newVertices[3].p, newVertices[4].p, newVertices[1].uv, newVertices[3].uv, newVertices[4].uv, t.normal, t.texture)
       return {triangle1, triangle2}
    end
 end
 
-function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, color)
+function TriangleDepth(area, d1, d2, d3, uv1x, uv2x, uv3x, dx, dy)
+   local ia = 1 / area
+   local w3, w1, w2 = d1 * ia, d2 * ia, d3 * ia
+   local z = w1 * uv1x + w2 * uv2x + w3 * uv3x
+   local di = dx + dy * WIDTH
+   return w1, w2, w3, z, di
+end
+
+function Fog(z)
+   return 1 - Clamp((1 / z - FOG_START) / (FOG_END - FOG_START), 0, 1)
+end
+
+function DrawTriangleColor(p1, p2, p3, uv1, uv2, uv3, normal, color)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
-   local r, g, b, a = ToFFIColor(color.r, color.g, color.b, 1.0)
+   local r, g, b, a = ToFFIColor(color.r * normal, color.g * normal, color.b * normal, 1.0)
 
    for dy = ymin, ymax do
       for dx = xmin, xmax do
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
-            local ia = 1 / area
-            local w3, w1, w2 = d1 * ia, d2 * ia, d3 * ia
-            local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
-            local di = dx + dy * WIDTH
+            local w1, w2, w3, z, di = TriangleDepth(area, d1, d2, d3, uv1.x, uv2.x, uv3.x, dx, dy)
             if DEPTH_BUFFER[di] < z then
                DEPTH_BUFFER[di] = z;
+               local fog = Fog(z)
                local ci = 4 * di
-               CANVAS_FFI[ci] = r;
-               CANVAS_FFI[ci + 1] = g;
-               CANVAS_FFI[ci + 2] = b;
-               CANVAS_FFI[ci + 3] = a;
+               CANVAS_FFI[ci]     = r * fog;
+               CANVAS_FFI[ci + 1] = g * fog;
+               CANVAS_FFI[ci + 2] = b * fog;
+               CANVAS_FFI[ci + 3] = a * fog;
             end
          end
       end
    end
 end
 
-function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
+function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, normal, texture)
    local xmin, xmax, ymin, ymax = TriangleBoundingBox(p1, p2, p3)
    local area = TriangleArea(p1, p2, p3)
    if (area == 0.0) then return end
@@ -243,20 +267,18 @@ function DrawTriangleTexture(p1, p2, p3, uv1, uv2, uv3, texture)
       for dx = xmin, xmax do
          local d1, d2, d3 = TriangleEdgeValues(dx, dy, p1, p2, p3)
          if (d1 <= 0 and d2 <= 0 and d3 <= 0) or (d1 >= 0 and d2 >= 0 and d3 >= 0) then
-            local ia = 1 / area
-            local w3, w1, w2 = d1 * ia, d2 * ia, d3 * ia
-            local z = w1 * uv1.x + w2 * uv2.x + w3 * uv3.x
-            local di = dx + dy * WIDTH
+            local w1, w2, w3, z, di = TriangleDepth(area, d1, d2, d3, uv1.x, uv2.x, uv3.x, dx, dy)
             if DEPTH_BUFFER[di] < z then
                DEPTH_BUFFER[di] = z;
                local u, v = TriangleUV(w1, w2, w3, uv1, uv2, uv3)
                local tx, ty = TriangleUVTextureCoords(u, v, texture.width, texture.height)
                local ti = 4 * (tx + ty * texture.width)
+               local fog = Fog(z)
                local ci = 4 * di
-               CANVAS_FFI[ci] = texture.ffi[ti];
-               CANVAS_FFI[ci + 1] = texture.ffi[ti + 1];
-               CANVAS_FFI[ci + 2] = texture.ffi[ti + 2];
-               CANVAS_FFI[ci + 3] = texture.ffi[ti + 3];
+               CANVAS_FFI[ci]     = math.floor(fog * Clamp(normal * texture.ffi[ti], 0, 255));
+               CANVAS_FFI[ci + 1] = math.floor(fog * Clamp(normal * texture.ffi[ti + 1], 0, 255));
+               CANVAS_FFI[ci + 2] = math.floor(fog * Clamp(normal * texture.ffi[ti + 2], 0, 255));
+               CANVAS_FFI[ci + 3] = math.floor(fog * Clamp(normal * texture.ffi[ti + 3], 0, 255));
             end
          end
       end
