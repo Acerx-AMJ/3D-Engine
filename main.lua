@@ -36,6 +36,13 @@ function love.load()
    local floor5 = NewTexture('assets/industrial_floor5.png')
    local floor9 = NewTexture('assets/industrial_floor9.png')
    local wall8 = NewTexture('assets/industrial_wall8.png')
+   local tile = NewTexture('assets/tile.png')
+   local rainbow = NewTexture('assets/rainbow.png')
+   local bricks = NewTexture('assets/bricks.png')
+
+   table.insert(geometry, NewCube(Vec3(3.25, 0.25, 0), Vec3(1, 1, 1), Vec3(0, 0, 0), {rainbow, rainbow, rainbow, rainbow, rainbow, rainbow}))
+   table.insert(geometry, NewCube(Vec3(3, 0.5, 2), Vec3(1.5, 1.5, 1.5), Vec3(0, 0, 0), {bricks, bricks, bricks, bricks, bricks, bricks}))
+   table.insert(geometry, NewWedge(Vec3(3, 0, -2), Vec3(1, 1, 1), Vec3(0, -math.pi / 2, 0), {tile, tile, tile, tile, tile}))
 
    table.insert(geometry, NewFace(Vec3(-50, -50, 0), Vec3(100, 100, 0), Vec3(math.pi / 2, 0, 0), {Color(0.15, 0.15, 0.15)}))
 
@@ -47,7 +54,6 @@ function love.load()
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi, 0, 0), {Red}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(math.pi * 1.5, 0, 0), {Blue}))
    table.insert(geometry, NewFace(Vec3(1, 0, 3), Vec3(1.5, 1.5, 0), Vec3(0, math.pi * 1.5, 0), {Green}))
-
    table.insert(geometry, NewCube(Vec3(1, 0, -2), Vec3(1, 1, 1), Vec3(0, math.pi, 0), {wall8, wall8, wall8, wall8, floor9, floor9}))
    table.insert(geometry, NewWedge(Vec3(0, 0, -2), Vec3(1, 1, 1), Vec3(0, math.pi, 0), {wall8, floor9, wall8, wall8, floor9}))
 end
@@ -88,6 +94,10 @@ function love.update(dt)
 
    -- update geometry here
    timer = timer + dt
+
+   RotateGeometry(geometry[1], Vec3(timer, timer, timer))
+   MoveGeometry(geometry[2], Vec3(geometry[2].pos.x, 0.5 + math.sin(timer) * 0.5, geometry[2].pos.z))
+   ScaleGeometry(geometry[2], Vec3(1.25 + math.sin(timer * 2) * 0.25, geometry[2].size.y, 1.25 + math.cos(timer * 2) * 0.25))
 end
 
 function love.draw()
