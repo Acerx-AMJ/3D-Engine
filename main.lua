@@ -43,6 +43,7 @@ function love.load()
    table.insert(geometry, NewCube(Vec3(3.25, 0.25, 0), Vec3(1, 1, 1), Vec3(0, 0, 0), {rainbow, rainbow, rainbow, rainbow, rainbow, rainbow}))
    table.insert(geometry, NewCube(Vec3(3, 0.5, 2), Vec3(1.5, 1.5, 1.5), Vec3(0, 0, 0), {bricks, bricks, bricks, bricks, bricks, bricks}))
    table.insert(geometry, NewWedge(Vec3(3, 0, -2), Vec3(1, 1, 1), Vec3(0, -math.pi / 2, 0), {tile, tile, tile, tile, tile}))
+   table.insert(geometry, NewPyramid(Vec3(-3, 0, 0), Vec3(1.5, 1.5, 1.5), Vec3(0, 0, 0), {floor5, floor5, floor5, floor5, floor5}))
 
    table.insert(geometry, NewFace(Vec3(-50, -50, 0), Vec3(100, 100, 0), Vec3(math.pi / 2, 0, 0), {Color(0.15, 0.15, 0.15)}))
 
